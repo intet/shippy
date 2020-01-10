@@ -1,1 +1,6 @@
 https://ewanvalentine.io/microservices-in-golang-part-1/
+
+go get -t github.com/intet/shippy/consignment-service/proto/consignment
+
+go mod init github.com/intet/shippy/consignment-service/proto/consignment
+go get -u

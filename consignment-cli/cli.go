@@ -52,5 +52,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not greet: %v", err)
 	}
+	getAll, err := client.GetConsignment(context.Background(), &pb.GetRequest{})
+	if err != nil {
+		log.Fatalf("Could not greet: %v", err)
+	}
+	for _, v := range getAll.Consignments {
+		log.Println(v)
+	}
+
 	log.Printf("Created: %t", r.Created)
 }
