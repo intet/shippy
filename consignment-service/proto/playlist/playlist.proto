@@ -1,0 +1,21 @@
+syntax = "proto3";
+package music;
+
+
+service PlayListService{
+    rpc createPlayList(CreatePlayListRq) returns (CreatePlayListRs) {}
+}
+
+message CreatePlayListRq{
+    string name = 1;
+    repeated Track tracks = 2;
+}
+
+message CreatePlayListRs{
+    string name = 1;
+    int32 size = 2;
+}
+
+message Track {
+    string name = 1;
+}
