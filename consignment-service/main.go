@@ -8,6 +8,8 @@ import (
 
 	// Import the generated protobuf code
 	pb "github.com/intet/shippy/consignment-service/proto/consignment"
+	pbm "github.com/intet/shippy/consignment-service/proto/playlist"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -70,9 +72,41 @@ func (s *service) GetConsignment(ctx context.Context, req *pb.GetRequest) (*pb.R
 	return &pb.Response{Created: false, Consignments: all}, nil
 }
 
+type musicRepository interface {
+	create(rq *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error)
+}
+
+type MusicRepository struct {
+	mu       sync.RWMutex
+	playList []*pbm.CreatePlayListRq
+}
+
+func (repo *MusicRepository) create(rq *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error) {
+	repo.mu.Lock()
+	updated := append(repo.playList, rq)
+	repo.playList = updated
+	repo.mu.Unlock()
+	return &pbm.CreatePlayListRs{Name: rq.Name, Size: int32(len(rq.Tracks))}, nil
+}
+
+type playListService struct {
+	repo musicRepository
+}
+
+func (s *playListService) CreatePlayList(ctx context.Context, req *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error) {
+	result, err := s.repo.create(req)
+	if err != nil {
+		return nil, err
+	}
+	log.Println("some:", req.Name)
+
+	return result, nil
+}
+
 func main() {
 
 	repo := &Repository{}
+	musicRepo := &MusicRepository{}
 
 	// Set-up our gRPC server.
 	lis, err := net.Listen("tcp", port)
@@ -85,7 +119,7 @@ func main() {
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
 	pb.RegisterShippingServiceServer(s, &service{repo})
-
+	pbm.RegisterPlayListServiceServer(s, &playListService{musicRepo})
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
 

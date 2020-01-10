@@ -1,0 +1,6 @@
+{
+  "name": "someName",
+  "tracks": [
+    { "name": "cust001"}, { "name": "cust002"}
+  ]
+}
