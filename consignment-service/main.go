@@ -3,19 +3,14 @@ package main
 import (
 	"context"
 	"log"
-	"net"
 	"sync"
 
 	// Import the generated protobuf code
 	pb "github.com/intet/shippy/consignment-service/proto/consignment"
 	pbm "github.com/intet/shippy/consignment-service/proto/playlist"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-)
-
-const (
-	port = ":50051"
+	"github.com/micro/go-micro"
+	"fmt"
 )
 
 type repository interface {
@@ -106,25 +101,24 @@ func (s *playListService) CreatePlayList(ctx context.Context, req *pbm.CreatePla
 func main() {
 
 	repo := &Repository{}
-	musicRepo := &MusicRepository{}
 
-	// Set-up our gRPC server.
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
+	// Create a new service. Optionally include some options here.
+	srv := micro.NewService(
+
+		// This name must match the package name given in your protobuf definition
+		micro.Name("shippy.service.consignment"),
+	)
+	srv.Init()
+
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	pb.RegisterShippingServiceServer(s, &service{repo})
-	pbm.RegisterPlayListServiceServer(s, &playListService{musicRepo})
-	// Register reflection service on gRPC server.
-	reflection.Register(s)
+	pb.RegisterShippingServiceHandler(svr.Server(), &service{repo})
 
-	log.Println("Running on port:", port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+
+	// Run the server
+	if err := srv.Run(); err != nil {
+		fmt.Println(err)
 	}
 }

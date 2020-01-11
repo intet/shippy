@@ -4,13 +4,15 @@
 package music
 
 import (
-	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
+)
+
+import (
+	client "github.com/micro/go-micro/client"
+	server "github.com/micro/go-micro/server"
+	context "golang.org/x/net/context"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -183,80 +185,57 @@ var fileDescriptor_25b741c62f292238 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ client.Option
+var _ server.Option
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+// Client API for PlayListService service
 
-// PlayListServiceClient is the client API for PlayListService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PlayListServiceClient interface {
-	CreatePlayList(ctx context.Context, in *CreatePlayListRq, opts ...grpc.CallOption) (*CreatePlayListRs, error)
+	CreatePlayList(ctx context.Context, in *CreatePlayListRq, opts ...client.CallOption) (*CreatePlayListRs, error)
 }
 
 type playListServiceClient struct {
-	cc *grpc.ClientConn
+	c           client.Client
+	serviceName string
 }
 
-func NewPlayListServiceClient(cc *grpc.ClientConn) PlayListServiceClient {
-	return &playListServiceClient{cc}
+func NewPlayListServiceClient(serviceName string, c client.Client) PlayListServiceClient {
+	if c == nil {
+		c = client.NewClient()
+	}
+	if len(serviceName) == 0 {
+		serviceName = "music"
+	}
+	return &playListServiceClient{
+		c:           c,
+		serviceName: serviceName,
+	}
 }
 
-func (c *playListServiceClient) CreatePlayList(ctx context.Context, in *CreatePlayListRq, opts ...grpc.CallOption) (*CreatePlayListRs, error) {
+func (c *playListServiceClient) CreatePlayList(ctx context.Context, in *CreatePlayListRq, opts ...client.CallOption) (*CreatePlayListRs, error) {
+	req := c.c.NewRequest(c.serviceName, "PlayListService.createPlayList", in)
 	out := new(CreatePlayListRs)
-	err := c.cc.Invoke(ctx, "/music.PlayListService/createPlayList", in, out, opts...)
+	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PlayListServiceServer is the server API for PlayListService service.
-type PlayListServiceServer interface {
-	CreatePlayList(context.Context, *CreatePlayListRq) (*CreatePlayListRs, error)
+// Server API for PlayListService service
+
+type PlayListServiceHandler interface {
+	CreatePlayList(context.Context, *CreatePlayListRq, *CreatePlayListRs) error
 }
 
-// UnimplementedPlayListServiceServer can be embedded to have forward compatible implementations.
-type UnimplementedPlayListServiceServer struct {
+func RegisterPlayListServiceHandler(s server.Server, hdlr PlayListServiceHandler, opts ...server.HandlerOption) {
+	s.Handle(s.NewHandler(&PlayListService{hdlr}, opts...))
 }
 
-func (*UnimplementedPlayListServiceServer) CreatePlayList(ctx context.Context, req *CreatePlayListRq) (*CreatePlayListRs, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePlayList not implemented")
+type PlayListService struct {
+	PlayListServiceHandler
 }
 
-func RegisterPlayListServiceServer(s *grpc.Server, srv PlayListServiceServer) {
-	s.RegisterService(&_PlayListService_serviceDesc, srv)
-}
-
-func _PlayListService_CreatePlayList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePlayListRq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PlayListServiceServer).CreatePlayList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/music.PlayListService/CreatePlayList",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PlayListServiceServer).CreatePlayList(ctx, req.(*CreatePlayListRq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _PlayListService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "music.PlayListService",
-	HandlerType: (*PlayListServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "createPlayList",
-			Handler:    _PlayListService_CreatePlayList_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/playlist/playlist.proto",
+func (h *PlayListService) CreatePlayList(ctx context.Context, in *CreatePlayListRq, out *CreatePlayListRs) error {
+	return h.PlayListServiceHandler.CreatePlayList(ctx, in, out)
 }
