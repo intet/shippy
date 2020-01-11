@@ -1,16 +1,13 @@
 package main
 
 import (
-	"context"
-	"log"
-	"sync"
+
+	"fmt"
 
 	// Import the generated protobuf code
 	pb "github.com/intet/shippy/consignment-service/proto/consignment"
-	pbm "github.com/intet/shippy/consignment-service/proto/playlist"
-
 	"github.com/micro/go-micro"
-	"fmt"
+	"context"
 )
 
 type repository interface {
@@ -21,16 +18,12 @@ type repository interface {
 // Repository - Dummy repository, this simulates the use of a datastore
 // of some kind. We'll replace this with a real implementation later on.
 type Repository struct {
-	mu           sync.RWMutex
 	consignments []*pb.Consignment
 }
 
-// Create a new consignment
 func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, error) {
-	repo.mu.Lock()
 	updated := append(repo.consignments, consignment)
 	repo.consignments = updated
-	repo.mu.Unlock()
 	return consignment, nil
 }
 
@@ -49,53 +42,25 @@ type service struct {
 // CreateConsignment - we created just one method on our service,
 // which is a create method, which takes a context and a request as an
 // argument, these are handled by the gRPC server.
-func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment) (*pb.Response, error) {
+func (s *service) CreateConsignment(ctx context.Context, req *pb.Consignment, res *pb.Response) error {
 
 	// Save our consignment
 	consignment, err := s.repo.Create(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.Println("some:", req.Weight)
 
 	// Return matching the `Response` message we created in our
 	// protobuf definition.
-	return &pb.Response{Created: true, Consignment: consignment}, nil
-}
-func (s *service) GetConsignment(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
-	all := s.repo.GetAll()
-	return &pb.Response{Created: false, Consignments: all}, nil
+	res.Created = true
+	res.Consignment = consignment
+	return nil
 }
 
-type musicRepository interface {
-	create(rq *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error)
-}
-
-type MusicRepository struct {
-	mu       sync.RWMutex
-	playList []*pbm.CreatePlayListRq
-}
-
-func (repo *MusicRepository) create(rq *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error) {
-	repo.mu.Lock()
-	updated := append(repo.playList, rq)
-	repo.playList = updated
-	repo.mu.Unlock()
-	return &pbm.CreatePlayListRs{Name: rq.Name, Size: int32(len(rq.Tracks))}, nil
-}
-
-type playListService struct {
-	repo musicRepository
-}
-
-func (s *playListService) CreatePlayList(ctx context.Context, req *pbm.CreatePlayListRq) (*pbm.CreatePlayListRs, error) {
-	result, err := s.repo.create(req)
-	if err != nil {
-		return nil, err
-	}
-	log.Println("some:", req.Name)
-
-	return result, nil
+func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
+	consignments := s.repo.GetAll()
+	res.Consignments = consignments
+	return nil
 }
 
 func main() {
@@ -108,17 +73,16 @@ func main() {
 		// This name must match the package name given in your protobuf definition
 		micro.Name("shippy.service.consignment"),
 	)
+
+	// Init will parse the command line flags.
 	srv.Init()
 
-
-	// Register our service with the gRPC server, this will tie our
-	// implementation into the auto-generated interface code for our
-	// protobuf definition.
-	pb.RegisterShippingServiceHandler(svr.Server(), &service{repo})
-
+	// Register handler
+	pb.RegisterShippingServiceHandler(srv.Server(), &service{repo})
 
 	// Run the server
 	if err := srv.Run(); err != nil {
 		fmt.Println(err)
 	}
 }
+
