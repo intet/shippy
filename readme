@@ -7,7 +7,8 @@ go get -u github.com/golang/protobuf/protoc-gen-go
 go get golang.org/x/sys/unix
 go get -u github.com/micro/protobuf/{proto,protoc-gen-go}
 
-go mod init github.com/intet/shippy/consignment-service/proto/consignment
+go mod init github.com/intet/shippy/consignment-service
+go mod init github.com/intet/shippy/consignment-cli
 go get -u
 go get -u github.com/intet/shippy/consignment-service/proto/consignment
 
