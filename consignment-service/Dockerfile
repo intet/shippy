@@ -15,7 +15,7 @@ RUN go mod download
 
 # Создаст двоичный файл с флагами, который позволит
 # нам запустить этот двоичный файл в Alpine.
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o consignment-service
+RUN CGO_ENABLED=0 GOOS=linux go build -o consignment-service -a -installsuffix cgo main.go repository.go handler.go datastore.go
 
 # Здесь мы используем второй оператор FROM,
 # это говорит Docker начать новый процесс сборки с этим же образом.
