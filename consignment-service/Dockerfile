@@ -2,6 +2,6 @@ FROM alpine:latest
 
 RUN mkdir /app
 WORKDIR /app
-ADD consignment-service /app/consignment-service
+ADD consignment-service /app/consignment-service-intetm
 
-CMD ["./consignment-service"]
+CMD ["./consignment-service-intetm"]
