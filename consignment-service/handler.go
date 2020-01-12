@@ -27,7 +27,7 @@ func (s *handler) CreateConsignment(ctx context.Context, req *pb.Consignment, re
 }
 
 // GetConsignments -
-func (s *handler) GetConsignments(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
+func (s *handler) GetConsignment(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
 	consignments, err := s.repository.GetAll(ctx)
 	if err != nil {
 		return err
