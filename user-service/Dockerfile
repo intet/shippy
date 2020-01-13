@@ -6,7 +6,7 @@ FROM golang:alpine as builder
 RUN apk --no-cache add git
 
 # Установит рабочий каталог на наш текущий сервис в gopath
-WORKDIR /app/consignment-service
+WORKDIR /app/user-service
 
 # Скопирует текущий код в рабочий каталог
 COPY . .
@@ -15,7 +15,7 @@ RUN go mod download
 
 # Создаст двоичный файл с флагами, который позволит
 # нам запустить этот двоичный файл в Alpine.
-RUN CGO_ENABLED=0 GOOS=linux go build -o consignment-service -a -installsuffix cgo main.go repository.go handler.go datastore.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o user-service -a -installsuffix cgo main.go repository.go handler.go database.go token_service.go
 
 # Здесь мы используем второй оператор FROM,
 # это говорит Docker начать новый процесс сборки с этим же образом.
@@ -33,10 +33,10 @@ WORKDIR /app
 # Это позволяет заглянуть в наш предыдущий образ,
 # и найти двоичный файл, который мы создали ранее,
 # и поместить его в этот контейнер. Удивительно!
-COPY --from=builder /app/consignment-service/consignment-service .
+COPY --from=builder /app/user-service/user-service .
 
 # Запустит бинарный файл как обычно! На этот раз с бинарной сборкой в
 # отдельном контейнере со всеми правильными зависимостями и
 # run time библиотеками.
-CMD ["./consignment-service"]
+CMD ["./user-service"]
 
