@@ -8,13 +8,12 @@ import (
 	pb "github.com/intet/shippy/consignment-service/proto/consignment"
 	"github.com/micro/go-micro"
 	"context"
-	"os"
 	"log"
 )
 
 const (
 	port = ":50051"
-	defaultHost = "datastore:27017"
+	defaultHost = "localhost:27017"
 )
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 
 	srv.Init()
 
-	uri := os.Getenv("DB_HOST")
+	uri := defaultHost
 	if uri == "" {
 		uri = defaultHost
 	}
