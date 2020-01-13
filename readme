@@ -9,8 +9,11 @@ go get -u github.com/micro/protobuf/{proto,protoc-gen-go}
 
 go mod init github.com/intet/shippy/consignment-service
 go mod init github.com/intet/shippy/consignment-cli
+go mod init github.com/intet/shippy/user-service
+
 go get -u
 go get -u github.com/intet/shippy/consignment-service/proto/consignment
+go get -u github.com/intet/shippy/user-service/proto/user
 
 
 protoc -I. --go_out=plugins=grpc:. proto/consignment/consignment.proto
