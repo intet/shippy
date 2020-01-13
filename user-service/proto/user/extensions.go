@@ -6,6 +6,6 @@ import (
 )
 
 func (model *User) BeforeCreate(scope *gorm.Scope) error {
-	id, _ := uid.NewV4()
+	id := uid.NewV4()
 	return scope.SetColumn("Id", id.String())
 }
